@@ -2,6 +2,7 @@ from typing import Optional
 from datetime import datetime
 from exceptions import AuthorizationError
 from exceptions import RegistartionError
+import json
 import os
 class Authenticator():
     def __init__(self, login: Optional[str] = None, password: Optional[int] = None,
@@ -24,48 +25,52 @@ class Authenticator():
         """Метод чтения данных из файла Auth.txt
         """
         with open("Auth.txt", "r") as f:
-            self.login = f.readline()
-            self.password = f.readline()
-            # self.last_success_login_at = f.readline()
-            # self.errors_count = f.readline()
+            self.login = json.loads(f.readline().strip())
+            self.password = json.loads(f.readline().strip())
+            self.last_success_login_at = json.loads(datetime.fromisoformat(f.readline().strip()))
+            self.errors_count = json.loads((f.readline().strip()))
 
     def _update_auth_file(self):
         """Метод перезаписи файла Auth.txt
         """
         with open("Auth.txt", "w") as f:
-            f.write(self.errors_count.__str__())
+            f.write(json.dumps(self.login))
+            f.write(json.dumps(self.password))
+            self.last_success_login_at = datetime.utcnow()
+            f.write(json.dumps(self.last_success_login_at.isoformat()))
+            f.write(json.dumps(self.errors_count))
 
-    def authorize(self, new_login, new_password):
+
+    def authorize(self, login, password):
         """Метод проверки логина и пароля. Принимает аргументы строки логина и пароля.
         Сравнивает логин и пароль из аргументов с логином и паролем из файла.
         """
-        self.new_login = new_login
-        self.new_password = new_password
-        self.errors_count = 0
-        self._read_auth_file()
-        if self.login.strip() == new_login and self.password.strip() == new_password:
-            print("You authorized")
-            return
-        elif self.login.strip() is None:
-            raise AuthorizationError
+        if not self.login:
+            self.errors_count += 1
+            raise AuthorizationError("Not registrated")
+        if not login:
+            self.errors_count += 1
+            raise AuthorizationError("Логин не может быть пустым")
+        if login == self.login and password == self.password:
+            self._update_auth_file()
+        else:
+            self.errors_count += 1
+            raise AuthorizationError("Пароль или логин некорректны")
 
-        self.errors_count += 1
-        raise AuthorizationError
-
-    def registrate(self, registrate_login: str, registrate_password: str):
+    def registrate(self, login, password):
         """Регистрация пользователя. Принимает аргументы строки логина и пароля. Делает проверку, что файла рядом auth.txt нет.
         Если он есть, вызывает исключение RegistrationError
         """
-        self.registrate_login = registrate_login
-        self.registrate_password = registrate_password
-        if os.path.exists("D:\PYTHON\Authorization\Auth.txt"):
-            raise RegistartionError
-        with open("Auth.txt", "w") as f:
-            f.write(self.registrate_login)
-            f.write(self.registrate_password)
-            f.write(self._update_auth_file())
-            if self.registrate_login is None:
-                raise RegistartionError
+        if self.login:
+            self.errors_count += 1
+            raise RegistartionError("Вы уже зарегистрированы")
+        if not login:
+            self.errors_count += 1
+            raise RegistartionError("Логин не должен быть пустым")
+
+        self.login = login
+        self.password = password
+        self._update_auth_file()
 
 
 

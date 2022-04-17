@@ -1,5 +1,16 @@
 from random import randint
 from authenticator import Authenticator
+from exceptions import AuthorizationError, RegistartionError
+
+def infinity(func):
+    def wrap():
+        while True:
+            if func():
+                break
+    return wrap
+
+
+
 def guess_number_game():
     """Ф-ция, предлагающая сыграть в угадайку
 
@@ -20,16 +31,42 @@ def guess_number_game():
         else:
             print(f"Пока мимо, попробуй еще раз")
             attempt += 1
-def main():
-    while True:
-        authenticator = Authenticator()
-        user_login = input("Enter your login:")
-        user_password = int(input("Enter your password:"))
-        if user_login == new_login and user_password == new_password:
-            authenticator.authorize(user_login, user_password)
-        else:
-            authenticator.registrate()
-        break
 
+
+authenticator = Authenticator()
+
+@infinity
+def main():
+    if authenticator.login:
+        print("Чтобы авторизоваться, введите ваш логин и пароль")
+    else:
+        print("Чтобы зарегистрироваться, введите ваш логин и пароль")
+
+    username = input("Введите логин:")
+    password = input("Введите пароль:")
+
+    if authenticator.login:
+        try:
+            authenticator.authorize(username, password)
+        except AuthorizationError as e:
+            print(f"Error: {e}")
+            return False
+    else:
+        try:
+            authenticator.registrate(username, password)
+        except RegistartionError as e:
+            print(f"Error: {e}")
+            return False
+
+        print("Вы прошли регистрацию")
+        return True
+
+    success_login_time = authenticator.last_success_login_at.strftime('%d.%m.%Y %H:%M:%S')
+
+    print(f"Привет, {authenticator.login}")
+    print(f"Время последней попытки: {success_login_time}")
+    print(f"Кол-во попыток: {authenticator.errors_count}")
 
     guess_number_game()
+    return True
+
