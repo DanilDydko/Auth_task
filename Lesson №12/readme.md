@@ -1,1 +1,1 @@
-![alt text](screenshots/Screenshot_12.png)
+![alt text](screenshots/Lesson №12/Screenshot_12.png)
