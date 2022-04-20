@@ -16,7 +16,7 @@ class Authenticator():
     def _is_auth_file_exist(self) -> bool:
         """Метод проверки наличия файла Auth.txt
         """
-        if os.path.exists("D:\PYTHON\Authorization\Auth.txt"):
+        if os.path.exists("Auth.txt"):
             return True
         else:
             return False
@@ -25,20 +25,25 @@ class Authenticator():
         """Метод чтения данных из файла Auth.txt
         """
         with open("Auth.txt", "r") as f:
-            self.login = json.loads(f.readline().strip())
-            self.password = json.loads(f.readline().strip())
-            self.last_success_login_at = json.loads(datetime.fromisoformat(f.readline().strip()))
-            self.errors_count = json.loads((f.readline().strip()))
+            self.parsed_data = json.loads(self.data)
+            self.parsed_data['last_success_login_at'] = datetime.fromisoformat(self.parsed_data['last_success_login_at'])
+            f.readline(self.parsed_data)
+            # self.login = f.readline().strip()
+            # self.password = f.readline().strip()
+            # self.last_success_login_at = datetime.fromisoformat(f.readline().strip())
+            # self.errors_count = (f.readline().strip())
 
     def _update_auth_file(self):
         """Метод перезаписи файла Auth.txt
         """
         with open("Auth.txt", "w") as f:
-            f.write(json.dumps(self.login))
-            f.write(json.dumps(self.password))
-            self.last_success_login_at = datetime.utcnow()
-            f.write(json.dumps(self.last_success_login_at.isoformat()))
-            f.write(json.dumps(self.errors_count))
+            self.data_dict = {"login": 'danil',
+            "password": 'danil12',
+            'last_success_login_at': datetime.utcnow().isoformat()}
+            self.data = json.dumps(self.data_dict)
+            f.write(self.data)
+
+
 
 
     def authorize(self, login, password):
